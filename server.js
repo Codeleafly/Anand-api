@@ -76,7 +76,6 @@ function decrypt(encrypted, key) {
 }
 
 // --- AI Setup: Initialize GoogleGenAI client with API Key ---
-// Using the correct class name GoogleGenAI and passing API key as an object property
 const ai = new GoogleGenAI({ apiKey: GOOGLE_API_KEY_RAW });
 
 // --- CORS Setup ---
@@ -162,9 +161,10 @@ app.post("/chat", async (req, res) => {
         
         // --- Initialize new chat session for authenticated user ---
         try {
-            const model = ai.getGenerativeModel({
+            // **CORRECTED:** `ai.chats.create` direct call with model and config
+            const chat = ai.chats.create({
                 model: "gemini-2.5-flash", // Using gemini-2.5-flash as per official docs
-                config: { // All generation and tool configurations now go inside 'config'
+                config: { // All generation and tool configurations go inside 'config'
                     systemInstruction: systemPromptText, // Use the loaded system prompt
                     temperature: 1.0, // A bit higher for more creative responses
                     topK: 1, // Top-k sampling
@@ -175,11 +175,9 @@ app.post("/chat", async (req, res) => {
                         { googleSearch: {} }, // Integrate Google Search tool
                         { codeExecution: {} }  // Integrate Code Execution tool
                     ],
-                }
+                },
+                history: [] // Start with an empty history for a new session
             });
-
-            // Start a new chat session. The SDK now handles history implicitly after creation.
-            const chat = model.startChat({ history: [] }); // Start with an empty history for a new session
 
             userHistories[userId] = { chat }; // Store the chat object for the user
             requestCounter[userId] = 0; // Initialize request counter for new user
